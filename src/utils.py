@@ -33,4 +33,29 @@ class ProxmoxNode:
     
     @logger_decorator
     def reboot(self) -> None:
-        pass
+        import requests
+        reboot_url = f'https://{self.config.hostname}:8006/api2/extjs/nodes/proxmox/status/reboot'
+        session = requests.Session()
+        session.verify = False
+        # Вход в систему Proxmox
+        login_url = f'https://{self.config.hostname}:8006/api2/json/access/ticket'
+        data = {'username': self.config.username, 'password': self.config.password}
+        response = session.post(login_url, data=data)
+        response.raise_for_status()
+        ticket_data = response.json()
+        ticket = ticket_data['data']['ticket']
+        csrf_token = ticket_data['data']['CSRFPreventionToken']
+        headers = {'CSRFPreventionToken': csrf_token, 'Cookie': f'PVEAuthCookie={ticket}'}
+
+        response = session.post(reboot_url, headers=headers)
+        response.raise_for_status()
+
+        # Проверка успешности перезагрузки
+        if response.status_code == 200:
+            print("Нода успешно перезагружается.")
+        else:
+            print("Не удалось перезагрузить ноду. Код ошибки:", response.status_code)
+
+        #self.proxmox.nodes(self.config.node_name).status.reboot()
+        #print(s)
+
