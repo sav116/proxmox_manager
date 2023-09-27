@@ -15,7 +15,7 @@ logger.add(sys.stderr, format="{time} {level} {message}", filter="my_module", le
 def logger_decorator(func):
     """Logger decorator"""
     def wrapper(*func_args, **kwargs):
-        logger.info(f"Calling function: {func.__name__}")
+        logger.info(f"Calling function: {func.__name__}, with args: {func_args[1:]}")
         start_time = datetime.now()
         result = func(*func_args, **kwargs)
         logger.info(f"Duration: {datetime.now() - start_time}")
@@ -26,7 +26,8 @@ config_data = {
     "hostname": env.str("PVE_URL"),
     "username": env.str("PVE_USERNAME"),
     "password": env.str("PVE_PASSWORD"),
-    "node_name": env.str("PVE_NODENAME")
+    "node_name": env.str("PVE_NODENAME"),
+    "api_token": env.str("API_TOKEN")
 }
 
 class ProxmoxVMConfig(BaseModel):
@@ -34,5 +35,6 @@ class ProxmoxVMConfig(BaseModel):
     username: str
     password: str
     node_name: str
+    api_token: str
 
 config = ProxmoxVMConfig(**config_data)
