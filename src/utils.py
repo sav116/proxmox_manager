@@ -1,5 +1,6 @@
 from proxmoxer import ProxmoxAPI
 from config import ProxmoxVMConfig, logger_decorator
+from paramiko import SSHClient, AutoAddPolicy
 
 class ProxmoxNode:
     def __init__(self, config: ProxmoxVMConfig):
@@ -10,7 +11,9 @@ class ProxmoxNode:
             password=config.password,
             verify_ssl=False,
         )
-        
+        self.ssh = SSHClient()
+        self.ssh.set_missing_host_key_policy(AutoAddPolicy())
+
     @logger_decorator
     def get_vms(self) -> list:
         return self.proxmox.nodes(self.proxmox.nodes.get()[0]['node']).qemu.get()
@@ -31,31 +34,16 @@ class ProxmoxNode:
     def status(self) -> str:
         return self.proxmox.nodes.get()[0]["status"]
     
+    def _get_ssh_connect(self) -> SSHClient:
+        ssh = SSHClient()
+        ssh.set_missing_host_key_policy(AutoAddPolicy())
+        ssh.connect(self.config.hostname, username='root', password=self.config.password)
+        return ssh
+        
+    @logger_decorator
+    def shutdown(self) -> None:
+        self._get_ssh_connect().exec_command('shutdown')
+    
     @logger_decorator
     def reboot(self) -> None:
-        import requests
-        reboot_url = f'https://{self.config.hostname}:8006/api2/extjs/nodes/proxmox/status/reboot'
-        session = requests.Session()
-        session.verify = False
-        # Вход в систему Proxmox
-        login_url = f'https://{self.config.hostname}:8006/api2/json/access/ticket'
-        data = {'username': self.config.username, 'password': self.config.password}
-        response = session.post(login_url, data=data)
-        response.raise_for_status()
-        ticket_data = response.json()
-        ticket = ticket_data['data']['ticket']
-        csrf_token = ticket_data['data']['CSRFPreventionToken']
-        headers = {'CSRFPreventionToken': csrf_token, 'Cookie': f'PVEAuthCookie={ticket}'}
-
-        response = session.post(reboot_url, headers=headers)
-        response.raise_for_status()
-
-        # Проверка успешности перезагрузки
-        if response.status_code == 200:
-            print("Нода успешно перезагружается.")
-        else:
-            print("Не удалось перезагрузить ноду. Код ошибки:", response.status_code)
-
-        #self.proxmox.nodes(self.config.node_name).status.reboot()
-        #print(s)
-
+        self._get_ssh_connect().exec_command('reboot')
