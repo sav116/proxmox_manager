@@ -11,8 +11,6 @@ class ProxmoxNode:
             password=config.password,
             verify_ssl=False,
         )
-        self.ssh = SSHClient()
-        self.ssh.set_missing_host_key_policy(AutoAddPolicy())
 
     @logger_decorator
     def get_vms(self) -> list:
