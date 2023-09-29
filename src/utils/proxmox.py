@@ -1,8 +1,10 @@
 from proxmoxer import ProxmoxAPI
-from config import ProxmoxVMConfig, logger_decorator
+from data.config import ProxmoxVMConfig, logger_decorator
 from paramiko import SSHClient, AutoAddPolicy
 
 class ProxmoxNode:
+    
+    @logger_decorator
     def __init__(self, config: ProxmoxVMConfig):
         self.config = config
         self.proxmox = ProxmoxAPI(

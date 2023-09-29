@@ -27,7 +27,8 @@ config_data = {
     "username": env.str("PVE_USERNAME"),
     "password": env.str("PVE_PASSWORD"),
     "node_name": env.str("PVE_NODENAME"),
-    "api_token": env.str("API_TOKEN")
+    "bot_token": env.str("BOT_TOKEN"),
+    "admins": env.list("ADMINS")
 }
 
 class ProxmoxVMConfig(BaseModel):
@@ -35,6 +36,8 @@ class ProxmoxVMConfig(BaseModel):
     username: str
     password: str
     node_name: str
-    api_token: str
+    bot_token: str
+    admins: list
+    
 
 config = ProxmoxVMConfig(**config_data)
