@@ -18,7 +18,7 @@ def logger_decorator(func):
         logger.info(f"Calling function: {func.__name__}, with args: {func_args[1:]}")
         start_time = datetime.now()
         result = func(*func_args, **kwargs)
-        logger.info(f"Duration: {datetime.now() - start_time}")
+        logger.info(f"Сompleted function: {func.__name__}, duration: {datetime.now() - start_time}, returned: {result}")
         return result
     return wrapper
 
