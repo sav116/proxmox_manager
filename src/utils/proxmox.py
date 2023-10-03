@@ -19,6 +19,16 @@ class ProxmoxNode:
         return self.proxmox.nodes(self.proxmox.nodes.get()[0]['node']).qemu.get()
 
     @logger_decorator
+    def get_vm(self) -> list:
+        return self.proxmox.nodes(self.proxmox.nodes.get()[0]['node']).qemu.get()
+    
+    @logger_decorator
+    def get_vm_name(self, vmid: int) -> str:
+        for vm in self.proxmox.nodes(self.proxmox.nodes.get()[0]['node']).qemu.get():
+            if vm["vmid"] == vmid:
+                return vm["name"]
+    
+    @logger_decorator
     def start_vm(self, id) -> None:
         self.proxmox.nodes(self.config.node_name).qemu(id).status.post("start")
         
