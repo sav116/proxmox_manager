@@ -4,7 +4,6 @@ from aiogram.types import Message, CallbackQuery
 from data.loader import dp, bot, node
 from keyboards.keyboard import kb
 from utils.notify_admins import on_startup_notify
-from utils.k8s import start_k8s
 from keyboards.inlinekeyboards import get_ikb, get_ikb_vm
 
 
@@ -62,7 +61,7 @@ async def messages(message: Message):
                                parse_mode='HTML')
     
     elif message.text == "Включить k8s":
-        start_k8s()
+        node.start_k8s()
         await bot.send_message(chat_id=message.chat.id,
                                text="k8s включается...",
                                parse_mode='HTML')
@@ -72,7 +71,6 @@ async def messages(message: Message):
         await bot.send_message(chat_id=message.chat.id,
                                text="Нода перезагружается...",
                                parse_mode='HTML')
-        
         
     elif message.text == "Выключить ноду":
         node.shutdown()
