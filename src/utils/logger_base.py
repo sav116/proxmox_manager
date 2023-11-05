@@ -5,11 +5,11 @@ import re
 from data.config import config
 
 
+must_be_hidden = ['hostname', 'username', 'bot_token', 'password']
+hidden_pattern = '|'.join([str(config.model_dump()[k]) for k in config.model_dump() if k in must_be_hidden])
+
 def masked_out(message: str):
-    must_be_hidden = ['hostname', 'username', 'bot_token', 'password']
-    conf_dump = config.model_dump()
-    values = [str(conf_dump[k]) for k in conf_dump if k in must_be_hidden]
-    pattern = re.compile('|'.join(values))
+    pattern = re.compile(hidden_pattern)
     return pattern.sub("*****", message)
 
 def logger_decorator(func):
