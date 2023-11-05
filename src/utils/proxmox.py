@@ -1,48 +1,51 @@
 from proxmoxer import ProxmoxAPI
-from data.config import ProxmoxVMConfig, logger_decorator
+from data.config import ProxmoxVMConfig
 from paramiko import SSHClient, AutoAddPolicy
+from utils.base import BaseMeta
 
-class ProxmoxNode:
+class ProxmoxNode(metaclass=BaseMeta):
     
-    @logger_decorator
     def __init__(self, config: ProxmoxVMConfig):
         self.config = config
-        self.proxmox = ProxmoxAPI(
+
+    def _get_proxmox(self):
+        prox = ProxmoxAPI(
             self.config.hostname,
-            user=config.username,
-            password=config.password,
+            user=self.config.username,
+            password=self.config.password,
             verify_ssl=False,
         )
-
-    @logger_decorator
+        return prox
+        
     def get_vms(self) -> list:
-        return self.proxmox.nodes(self.proxmox.nodes.get()[0]['node']).qemu.get()
+        proxmox = self._get_proxmox()
+        return proxmox.nodes(proxmox.nodes.get()[0]['node']).qemu.get()
 
-    @logger_decorator
     def get_vm(self) -> list:
-        return self.proxmox.nodes(self.proxmox.nodes.get()[0]['node']).qemu.get()
+        proxmox = self._get_proxmox()
+        return proxmox.nodes(proxmox.nodes.get()[0]['node']).qemu.get()
     
-    @logger_decorator
     def get_vm_name(self, vmid: int) -> str:
-        for vm in self.proxmox.nodes(self.proxmox.nodes.get()[0]['node']).qemu.get():
+        proxmox = self._get_proxmox()
+        for vm in proxmox.nodes(proxmox.nodes.get()[0]['node']).qemu.get():
             if vm["vmid"] == vmid:
                 return vm["name"]
     
-    @logger_decorator
     def start_vm(self, id) -> None:
-        self.proxmox.nodes(self.config.node_name).qemu(id).status.post("start")
+        proxmox = self._get_proxmox()
+        return proxmox.nodes(self.config.node_name).qemu(id).status.post("start")
         
-    @logger_decorator
     def shutdown_vm(self, id) -> None:
-        self.proxmox.nodes(self.config.node_name).qemu(id).status.post("shutdown")
+        proxmox = self._get_proxmox()
+        return proxmox.nodes(self.config.node_name).qemu(id).status.post("shutdown")
 
-    @logger_decorator
     def reboot_vm(self, id) -> None:
-        self.proxmox.nodes(self.config.node_name).qemu(id).status.post("reboot")
+        proxmox = self._get_proxmox()
+        return proxmox.nodes(self.config.node_name).qemu(id).status.post("reboot")
 
-    @logger_decorator
     def status(self) -> str:
-        return self.proxmox.nodes.get()[0]["status"]
+        proxmox = self._get_proxmox()
+        return proxmox.nodes.get()[0]["status"]
     
     def _get_ssh_connect(self) -> SSHClient:
         ssh = SSHClient()
@@ -50,10 +53,8 @@ class ProxmoxNode:
         ssh.connect(self.config.hostname, username='root', password=self.config.password)
         return ssh
         
-    @logger_decorator
     def shutdown(self) -> None:
         self._get_ssh_connect().exec_command('shutdown')
     
-    @logger_decorator
     def reboot(self) -> None:
         self._get_ssh_connect().exec_command('reboot')
