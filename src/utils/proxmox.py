@@ -9,13 +9,12 @@ class ProxmoxNode(metaclass=BaseMeta):
         self.config = config
 
     def _get_proxmox(self):
-        prox = ProxmoxAPI(
+        return ProxmoxAPI(
             self.config.hostname,
             user=self.config.username,
             password=self.config.password,
             verify_ssl=False,
         )
-        return prox
         
     def get_vms(self) -> list:
         proxmox = self._get_proxmox()
@@ -32,20 +31,21 @@ class ProxmoxNode(metaclass=BaseMeta):
                 return vm["name"]
     
     def start_vm(self, id) -> None:
-        proxmox = self._get_proxmox()
-        return proxmox.nodes(self.config.node_name).qemu(id).status.post("start")
+        return self._get_proxmox().nodes(self.config.node_name).qemu(id).status.post("start")
         
     def shutdown_vm(self, id) -> None:
-        proxmox = self._get_proxmox()
-        return proxmox.nodes(self.config.node_name).qemu(id).status.post("shutdown")
+        return self._get_proxmox().nodes(self.config.node_name).qemu(id).status.post("shutdown")
 
     def reboot_vm(self, id) -> None:
-        proxmox = self._get_proxmox()
-        return proxmox.nodes(self.config.node_name).qemu(id).status.post("reboot")
+        return self._get_proxmox().nodes(self.config.node_name).qemu(id).status.post("reboot")
 
     def status(self) -> str:
-        proxmox = self._get_proxmox()
-        return proxmox.nodes.get()[0]["status"]
+        return self._get_proxmox().nodes.get()[0]["status"]
+
+    def start_k8s(self) -> None:
+        for vm in self.get_vms():
+            if vm['name'].startswith('k8s'):
+                self.start_vm(vm['vmid'])
     
     def _get_ssh_connect(self) -> SSHClient:
         ssh = SSHClient()
