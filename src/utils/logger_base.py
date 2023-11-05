@@ -6,7 +6,10 @@ from data.config import config
 
 
 def masked_out(message: str):
-    pattern = re.compile(f"({config.password}|{config.bot_token})")
+    must_be_hidden = ['hostname', 'username', 'bot_token', 'password']
+    conf_dump = config.model_dump()
+    values = [str(conf_dump[k]) for k in conf_dump if k in must_be_hidden]
+    pattern = re.compile('|'.join(values))
     return pattern.sub("*****", message)
 
 def logger_decorator(func):

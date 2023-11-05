@@ -4,6 +4,7 @@ from aiogram.types import Message, CallbackQuery
 from data.loader import dp, bot, node
 from keyboards.keyboard import kb
 from utils.notify_admins import on_startup_notify
+from utils.k8s import start_k8s
 from keyboards.inlinekeyboards import get_ikb, get_ikb_vm
 
 
@@ -59,7 +60,13 @@ async def messages(message: Message):
                                text='Virtual machines:',
                                reply_markup=get_ikb(),
                                parse_mode='HTML')
-        
+    
+    elif message.text == "Включить k8s":
+        start_k8s()
+        await bot.send_message(chat_id=message.chat.id,
+                               text="k8s включается...",
+                               parse_mode='HTML')
+    
     elif message.text == "Перезагрузить ноду":
         node.reboot()
         await bot.send_message(chat_id=message.chat.id,
