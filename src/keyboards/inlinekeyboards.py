@@ -9,7 +9,9 @@ status = {
 }
 
 def get_ikb() -> InlineKeyboardMarkup:
-    ikb = InlineKeyboardMarkup(resize_keyboard=True)
+    ikb = InlineKeyboardMarkup(row_width=2)
+    buttons = []
+    
     for vm in sorted(node.get_vms(), key=lambda x: x['name']):
         vm_status = vm["status"]
         status_symbol = status[vm_status]
@@ -17,13 +19,23 @@ def get_ikb() -> InlineKeyboardMarkup:
         callback_data = f"ikb_vm_{vm['vmid']}"
         button = InlineKeyboardMarkup(text=text,
                                  callback_data=callback_data)
-        ikb.add(button)
+        buttons.append(button)
+        
+    ikb.add(*buttons)
+    update_vm_button = InlineKeyboardMarkup(text="🔄",
+                            callback_data="update_vm_buttons")
+    ikb.add(update_vm_button)
+    
     return ikb
 
 def get_ikb_vm(vmid: int) -> InlineKeyboardMarkup:
     ikb = InlineKeyboardMarkup(resize_keyboard=True)
     vm = [vm for vm in node.get_vms() if vm.get('vmid') == vmid][0]
-        
+    main_action = "configure"
+    b_config = InlineKeyboardMarkup(text=main_action + " ⚙️",
+                            callback_data=f"{main_action}_{vm['vmid']}")
+    ikb.add(b_config)
+    
     if vm["status"] == "stopped":
         main_action = "start"
         b = InlineKeyboardMarkup(text=main_action + " ▶️",
@@ -36,7 +48,6 @@ def get_ikb_vm(vmid: int) -> InlineKeyboardMarkup:
         main_action = "shutdown" + " ⏹️"
         b2 = InlineKeyboardMarkup(text=main_action,
                                   callback_data=f"{main_action}_{vm['vmid']}")
-        ikb.add(b1)
-        ikb.add(b2)
+        ikb.add(b1, b2)
         
     return ikb
