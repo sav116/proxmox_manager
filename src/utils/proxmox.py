@@ -20,9 +20,11 @@ class ProxmoxNode(metaclass=BaseMeta):
         proxmox = self._get_proxmox()
         return proxmox.nodes(proxmox.nodes.get()[0]['node']).qemu.get()
 
-    def get_vm(self) -> list:
+    def get_vm(self, vmid: int) -> list:
         proxmox = self._get_proxmox()
-        return proxmox.nodes(proxmox.nodes.get()[0]['node']).qemu.get()
+        for vm in proxmox.nodes(proxmox.nodes.get()[0]['node']).qemu.get():
+            if vm["vmid"] == vmid:
+                return vm
     
     def get_vm_name(self, vmid: int) -> str:
         proxmox = self._get_proxmox()
