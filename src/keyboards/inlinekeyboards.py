@@ -24,6 +24,7 @@ def get_ikb() -> InlineKeyboardMarkup:
     ikb.add(*buttons)
     update_vm_button = InlineKeyboardMarkup(text="🔄",
                             callback_data="update_vm_buttons")
+    
     ikb.add(update_vm_button)
     
     return ikb
