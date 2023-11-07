@@ -1,2 +1,1 @@
-# remote_controller
-Interface for remote server management
+Telegram bot for remote managing proxmox
