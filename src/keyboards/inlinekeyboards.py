@@ -13,13 +13,14 @@ def get_ikb() -> InlineKeyboardMarkup:
     buttons = []
     
     for vm in sorted(node.get_vms(), key=lambda x: x['name']):
-        vm_status = vm["status"]
-        status_symbol = status[vm_status]
-        text = f"{status_symbol} {vm['name']}"
-        callback_data = f"ikb_vm_{vm['vmid']}"
-        button = InlineKeyboardMarkup(text=text,
-                                 callback_data=callback_data)
-        buttons.append(button)
+        if "template" not in vm['name']:
+            vm_status = vm["status"]
+            status_symbol = status[vm_status]
+            text = f"{status_symbol} {vm['name']}"
+            callback_data = f"ikb_vm_{vm['vmid']}"
+            button = InlineKeyboardMarkup(text=text,
+                                    callback_data=callback_data)
+            buttons.append(button)
         
     ikb.add(*buttons)
     update_vm_button = InlineKeyboardMarkup(text="🔄",

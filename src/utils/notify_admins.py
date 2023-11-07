@@ -12,3 +12,6 @@ async def on_startup_notify(dp: Dispatcher):
 
         except Exception as err:
             logging.exception(err)
+            
+async def on_startup(dispatcher):
+    await on_startup_notify(dispatcher)
