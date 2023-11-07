@@ -3,14 +3,9 @@ from aiogram.types import Message, CallbackQuery
 
 from data.loader import dp, bot, node
 from keyboards.keyboard import kb
-from utils.notify_admins import on_startup_notify
+from utils.notify_admins import on_startup_notify, on_startup
 from utils.vms import get_vm_info
 from keyboards.inlinekeyboards import get_ikb, get_ikb_vm
-
-
-
-async def on_startup(dispatcher):
-    await on_startup_notify(dispatcher)
 
 
 @dp.message_handler(commands=['start'])
@@ -30,6 +25,7 @@ async def choice_mode_city_positions(call: CallbackQuery):
         vmid = int(call_back_data.split("_")[-1])
         vmname = node.get_vm_name(vmid)
         vm_info = get_vm_info(vmid)
+        #await bot.delete_message(call.message.chat.id, call.message.message_id)
         await bot.send_message(chat_id=call.message.chat.id,
                                text=vm_info,
                                reply_markup=get_ikb_vm(vmid),
@@ -46,6 +42,7 @@ async def choice_mode_city_positions(call: CallbackQuery):
         vmid = int(call_back_data.split("_")[-1])
         vmname = node.get_vm_name(vmid)
         node.reboot_vm(vmid)
+        await bot.delete_message(call.message.chat.id, call.message.message_id)
         await bot.send_message(chat_id=call.message.chat.id,
                                text=f"{vmname} перезагружается",
                                parse_mode='HTML')
@@ -54,6 +51,7 @@ async def choice_mode_city_positions(call: CallbackQuery):
         vmid = int(call_back_data.split("_")[-1])
         vmname = node.get_vm_name(vmid)
         node.shutdown_vm(vmid)
+        await bot.delete_message(call.message.chat.id, call.message.message_id)
         await bot.send_message(chat_id=call.message.chat.id,
                                text=f"{vmname} выключается",
                                parse_mode='HTML')
@@ -62,19 +60,21 @@ async def choice_mode_city_positions(call: CallbackQuery):
         vmid = int(call_back_data.split("_")[-1])
         vmname = node.get_vm_name(vmid)
         node.start_vm(vmid)
+        await bot.delete_message(call.message.chat.id, call.message.message_id)
         await bot.send_message(chat_id=call.message.chat.id,
                                text=f"{vmname} включается",
                                parse_mode='HTML')
         
     elif call_back_data.startswith("configure"):
-        await bot.send_message(chat_id=call.message.chat.id,
-                               text="опция в разработке",
-                               parse_mode='HTML')
+        #await bot.delete_message(call.message.chat.id, call.message.message_id)
+        await bot.answer_callback_query(call.id, text="Эта опция ещё разработке", show_alert=False)
+        
         
 @dp.message_handler()
 async def messages(message: Message):
     
     if message.text == "VM's":
+        await bot.delete_message(message.chat.id, message.message_id)
         await bot.send_message(chat_id=message.chat.id,
                                text='Virtual machines:',
                                reply_markup=get_ikb(),
@@ -82,23 +82,27 @@ async def messages(message: Message):
     
     elif message.text == "Power on k8s":
         node.start_k8s()
+        await bot.delete_message(message.chat.id, message.message_id)
         await bot.send_message(chat_id=message.chat.id,
                                text="k8s включается...",
                                parse_mode='HTML')
     
     elif message.text == "Reboot node":
         node.reboot()
+        await bot.delete_message(message.chat.id, message.message_id)
         await bot.send_message(chat_id=message.chat.id,
                                text="Нода перезагружается...",
                                parse_mode='HTML')
         
     elif message.text == "Shutdown node":
         node.shutdown()
+        await bot.delete_message(message.chat.id, message.message_id)
         await bot.send_message(chat_id=message.chat.id,
                                text="Нода выключается...",
                                parse_mode='HTML')
 
     elif message.text == "Create VM":
+        await bot.delete_message(message.chat.id, message.message_id)
         await bot.send_message(chat_id=message.chat.id,
                                text="Опция ещё в разработке",
                                parse_mode='HTML')
