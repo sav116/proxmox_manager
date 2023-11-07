@@ -1,2 +1,1 @@
-# remote_controller
-Interface for remote server management on Proxmox
+# Telegram bot for managing proxmox and VM's
