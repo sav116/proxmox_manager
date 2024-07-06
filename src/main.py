@@ -25,6 +25,10 @@ async def cancel_handler(message: Message, state: FSMContext):
     if current_state is None:
         return
     await state.finish()
+    await bot.send_message(chat_id=message.chat.id,
+                            text='Virtual machines:',
+                            reply_markup=get_ikb(),
+                            parse_mode='HTML')
     
 # Обработчик команды Create VM
 @dp.message_handler(lambda message: message.text == "Create VM")
@@ -83,10 +87,12 @@ async def process_memory(message: Message, state: FSMContext):
 @dp.message_handler(commands=['start'])
 async def command_start(message: Message):
     await bot.send_message(chat_id=message.chat.id,
-                           text=node.status(),
                            reply_markup=kb,
                            parse_mode='HTML')
-
+    await bot.send_message(chat_id=message.chat.id,
+                            text='Virtual machines:',
+                            reply_markup=get_ikb(),
+                            parse_mode='HTML')
 
 @dp.callback_query_handler()
 async def choice_mode_city_positions(call: CallbackQuery):
