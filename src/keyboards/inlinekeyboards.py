@@ -1,4 +1,4 @@
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
 
 from data.loader import node
 
@@ -16,15 +16,13 @@ def get_ikb() -> InlineKeyboardMarkup:
         if "template" not in vm['name']:
             vm_status = vm["status"]
             status_symbol = status[vm_status]
-            text = f"{vm['vmid']}\n{status_symbol} {vm['name']}"
+            text = f"{status_symbol}{vm['vmid']} {vm['name']}"
             callback_data = f"ikb_vm_{vm['vmid']}"
-            button = InlineKeyboardMarkup(text=text,
-                                    callback_data=callback_data)
+            button = InlineKeyboardButton(text=text, callback_data=callback_data)
             buttons.append(button)
         
     ikb.add(*buttons)
-    update_vm_button = InlineKeyboardMarkup(text="🔄",
-                            callback_data="update_vm_buttons")
+    update_vm_button = InlineKeyboardButton(text="🔄", callback_data="update_vm_buttons")
     
     ikb.add(update_vm_button)
     
