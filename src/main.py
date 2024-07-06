@@ -1,12 +1,81 @@
 from aiogram import executor
 from aiogram.types import Message, CallbackQuery
 
+
+from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters.state import State, StatesGroup
+
 from data.loader import dp, bot, node
 from keyboards.keyboard import kb
 from utils.notify_admins import on_startup_notify, on_startup
 from utils.vms import get_vm_info
 from keyboards.inlinekeyboards import get_ikb, get_ikb_vm
 
+
+class CreateVMStates(StatesGroup):
+    waiting_for_name = State()
+    waiting_for_id = State()
+    waiting_for_cores = State()
+    waiting_for_memory = State()
+
+@dp.message_handler(commands='cancel', state='*')
+async def cancel_handler(message: Message, state: FSMContext):
+    await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
+    current_state = await state.get_state()
+    if current_state is None:
+        return
+    await state.finish()
+    
+# Обработчик команды Create VM
+@dp.message_handler(lambda message: message.text == "Create VM")
+async def create_vm_start(message: Message):
+    await message.answer("Введите название ВМ:")
+    await CreateVMStates.waiting_for_name.set()
+
+# Ввод названия ВМ
+@dp.message_handler(state=CreateVMStates.waiting_for_name)
+async def process_name(message: Message, state: FSMContext):
+    await state.update_data(vm_name=message.text)
+    await message.answer("Введите ID ВМ:")
+    await CreateVMStates.waiting_for_id.set()
+
+# Ввод ID ВМ
+@dp.message_handler(state=CreateVMStates.waiting_for_id)
+async def process_id(message: Message, state: FSMContext):
+    await state.update_data(vm_id=message.text)
+    await message.answer("Введите количество ядер:")
+    await CreateVMStates.waiting_for_cores.set()
+
+# Ввод количества ядер
+@dp.message_handler(state=CreateVMStates.waiting_for_cores)
+async def process_cores(message: Message, state: FSMContext):
+    await state.update_data(vm_cores=message.text)
+    await message.answer("Введите количество памяти (GB):")
+    await CreateVMStates.waiting_for_memory.set()
+
+# Ввод количества памяти
+@dp.message_handler(state=CreateVMStates.waiting_for_memory)
+async def process_memory(message: Message, state: FSMContext):
+    await state.update_data(vm_memory=message.text)
+
+    user_data = await state.get_data()
+    vm_name = user_data['vm_name']
+    vm_id = user_data['vm_id']
+    vm_cores = user_data['vm_cores']
+    vm_memory = user_data['vm_memory'] * 1024
+
+    await message.answer("ВМ создаётся")
+
+    # Вызов функции для создания ВМ
+    await node.create_vm_from_template(
+        vmname=vm_name,
+        template_name='alma-template-32g',
+        vmid=vm_id,
+        cores=vm_cores,
+        memory=vm_memory,
+        )
+    # Завершение состояния
+    await state.finish()
 
 @dp.message_handler(commands=['start'])
 async def command_start(message: Message):
@@ -72,7 +141,7 @@ async def choice_mode_city_positions(call: CallbackQuery):
         
 @dp.message_handler()
 async def messages(message: Message):
-    
+
     if message.text == "VM's":
         await bot.delete_message(message.chat.id, message.message_id)
         await bot.send_message(chat_id=message.chat.id,
@@ -101,11 +170,67 @@ async def messages(message: Message):
                                text="Нода выключается...",
                                parse_mode='HTML')
 
-    elif message.text == "Create VM":
-        await bot.delete_message(message.chat.id, message.message_id)
-        await bot.send_message(chat_id=message.chat.id,
-                               text="Опция ещё в разработке",
-                               parse_mode='HTML')
+    # elif message.text == "Create VM":
+    #     await bot.delete_message(message.chat.id, message.message_id)
+    #     await bot.send_message(chat_id=message.chat.id,
+    #                            text="Эта опция ещё в разработке",
+    #                            parse_mode='HTML')
+class CreateVMStates(StatesGroup):
+    waiting_for_name = State()
+    waiting_for_id = State()
+    waiting_for_cores = State()
+    waiting_for_memory = State()
+
+# Обработчик команды Create VM
+@dp.message_handler(lambda message: message.text == "Create VM")
+async def create_vm_start(message: Message):
+    await message.answer("Введите название ВМ:")
+    await CreateVMStates.waiting_for_name.set()
+
+# Ввод названия ВМ
+@dp.message_handler(state=CreateVMStates.waiting_for_name)
+async def process_name(message: Message, state: FSMContext):
+    await state.update_data(vm_name=message.text)
+    await message.answer("Введите ID ВМ:")
+    await CreateVMStates.waiting_for_id.set()
+
+# Ввод ID ВМ
+@dp.message_handler(state=CreateVMStates.waiting_for_id)
+async def process_id(message: Message, state: FSMContext):
+    await state.update_data(vm_id=message.text)
+    await message.answer("Введите количество ядер:")
+    await CreateVMStates.waiting_for_cores.set()
+
+# Ввод количества ядер
+@dp.message_handler(state=CreateVMStates.waiting_for_cores)
+async def process_cores(message: Message, state: FSMContext):
+    await state.update_data(vm_cores=message.text)
+    await message.answer("Введите количество памяти (GB):")
+    await CreateVMStates.waiting_for_memory.set()
+
+# Ввод количества памяти
+@dp.message_handler(state=CreateVMStates.waiting_for_memory)
+async def process_memory(message: Message, state: FSMContext):
+    await state.update_data(vm_memory=message.text)
+
+    user_data = await state.get_data()
+    vm_name = user_data['vm_name']
+    vm_id = user_data['vm_id']
+    vm_cores = user_data['vm_cores']
+    vm_memory = user_data['vm_memory'] * 1024
+
+    await message.answer("ВМ создаётся")
+
+    # Вызов функции для создания ВМ
+    await node.create_vm_from_template(
+        vmname=vm_name,
+        template_name='alma-template-32g',
+        vmid=vm_id,
+        cores=vm_cores,
+        memory=vm_memory,
+        )
+    # Завершение состояния
+    await state.finish()
 
 if __name__ == "__main__":
     executor.start_polling(dp, skip_updates=True, on_startup=on_startup)

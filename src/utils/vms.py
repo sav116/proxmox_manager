@@ -8,4 +8,5 @@ def get_vm_info(vmid: int) -> str:
     cpus = vm_info['cpus']
     uptime = str(datetime.timedelta(seconds=int(vm_info['uptime'])))
     status = vm_info['status']
-    return f"{vm_info['name']}\nstatus: {status}\nram: {ram} Gb\ncpus: {cpus} cores\nuptime: {uptime} hours"
+    vm_id = vm_info['vmid']
+    return f"id: {vm_id }\nname: {vm_info['name']}\nstatus: {status}\nram: {ram} Gb\ncpus: {cpus} cores\nuptime: {uptime} hours"

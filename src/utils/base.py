@@ -1,7 +1,7 @@
-from utils.logger_base import logger_decorator
+from utils.logger_base import logger_decorator, logger
 
 class BaseMeta(type):
-
+    logger = logger
     def __new__(cls, name, bases, attrs):
         for attr_name, attr_value in attrs.items():
             if callable(attr_value):
