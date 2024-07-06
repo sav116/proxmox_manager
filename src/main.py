@@ -66,12 +66,12 @@ async def process_memory(message: Message, state: FSMContext):
     vm_name = user_data['vm_name']
     vm_id = user_data['vm_id']
     vm_cores = user_data['vm_cores']
-    vm_memory = user_data['vm_memory'] * 1024
+    vm_memory = int(user_data['vm_memory']) * 1024
 
     await message.answer("ВМ создаётся ...")
     await state.finish()
     # Вызов функции для создания ВМ
-    await node.create_vm_from_template(
+    node.create_vm_from_template(
         vmname=vm_name,
         template_name='alma-template-32g',
         vmid=vm_id,
@@ -87,6 +87,7 @@ async def process_memory(message: Message, state: FSMContext):
 @dp.message_handler(commands=['start'])
 async def command_start(message: Message):
     await bot.send_message(chat_id=message.chat.id,
+                           text=node.status(),
                            reply_markup=kb,
                            parse_mode='HTML')
     await bot.send_message(chat_id=message.chat.id,
@@ -149,8 +150,12 @@ async def choice_mode_city_positions(call: CallbackQuery):
         node.delete_vm(vmid)
         await bot.delete_message(call.message.chat.id, call.message.message_id)
         await bot.send_message(chat_id=call.message.chat.id,
-                               text=f"{vmname} удаляется",
+                               text=f"{vmname} удаляется ...",
                                parse_mode='HTML')
+        await bot.send_message(chat_id=call.message.chat.id,
+                                text='Virtual machines:',
+                                reply_markup=get_ikb(),
+                                parse_mode='HTML')
         
     elif call_back_data.startswith("configure"):
         #await bot.delete_message(call.message.chat.id, call.message.message_id)
