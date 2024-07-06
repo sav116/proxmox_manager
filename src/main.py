@@ -131,6 +131,15 @@ async def choice_mode_city_positions(call: CallbackQuery):
         await bot.send_message(chat_id=call.message.chat.id,
                                text=f"{vmname} включается",
                                parse_mode='HTML')
+
+    elif call_back_data.startswith("delete"):
+        vmid = int(call_back_data.split("_")[-1])
+        vmname = node.get_vm_name(vmid)
+        node.delete_vm(vmid)
+        await bot.delete_message(call.message.chat.id, call.message.message_id)
+        await bot.send_message(chat_id=call.message.chat.id,
+                               text=f"{vmname} удаляется",
+                               parse_mode='HTML')
         
     elif call_back_data.startswith("configure"):
         #await bot.delete_message(call.message.chat.id, call.message.message_id)

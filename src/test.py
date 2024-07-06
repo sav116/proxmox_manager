@@ -2,17 +2,26 @@ from data.config import config
 from utils.proxmox import ProxmoxNode
 import time
 
-
 node = ProxmoxNode(config)
 proxmox = node._get_proxmox()
 
-vmid = 104
-vmname='new-test-vm'
-node.create_vm_from_template(
-    vmname='bla-bla',
-    template_name='alma-template-32g',
-    vmid=vmid,)
+vmid = 161
 
+# Остановка виртуальной машины
+print(f"Остановка виртуальной машины с ID {vmid}...")
+proxmox.nodes(config.node_name).qemu(vmid).status.stop.post()
 
-node.change_hostname_and_ip(vmid, vmname)
-#node.reboot_vm(vmid)
+# Ожидание, пока виртуальная машина не остановится
+vm_stopped = False
+while not vm_stopped:
+    status = proxmox.nodes(config.node_name).qemu(vmid).status.current.get()
+    if status['status'] == 'stopped':
+        vm_stopped = True
+    else:
+        time.sleep(3)
+
+# Удаление виртуальной машины
+print(f"Удаление виртуальной машины с ID {vmid}...")
+proxmox.nodes(config.node_name).qemu(vmid).delete()
+
+print(f"Виртуальная машина с ID {vmid} удалена.")
