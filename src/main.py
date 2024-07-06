@@ -18,7 +18,7 @@ class CreateVMStates(StatesGroup):
     waiting_for_cores = State()
     waiting_for_memory = State()
 
-@dp.message_handler(commands='cancel', state='*')
+@dp.message_handler(lambda message: message.text.lower() == 'cancel' or message.text.startswith('/cancel'), state='*')
 async def cancel_handler(message: Message, state: FSMContext):
     await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
     current_state = await state.get_state()
@@ -64,7 +64,7 @@ async def process_memory(message: Message, state: FSMContext):
     vm_cores = user_data['vm_cores']
     vm_memory = user_data['vm_memory'] * 1024
 
-    await message.answer("ВМ создаётся")
+    await message.answer("ВМ создаётся ...")
     await state.finish()
     # Вызов функции для создания ВМ
     await node.create_vm_from_template(
@@ -74,6 +74,11 @@ async def process_memory(message: Message, state: FSMContext):
         cores=vm_cores,
         memory=vm_memory,
         )
+    await message.answer(f"ВМ {vm_name} с id {vm_id} создана")
+    await bot.send_message(chat_id=message.chat.id,
+                            text='Virtual machines:',
+                            reply_markup=get_ikb(),
+                            parse_mode='HTML')
 
 @dp.message_handler(commands=['start'])
 async def command_start(message: Message):
