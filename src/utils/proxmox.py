@@ -120,6 +120,17 @@ class ProxmoxNode(metaclass=BaseMeta):
     def shutdown_vm(self, vmid) -> None:
         self.proxmox.nodes(self.config.node_name).qemu(vmid).status.post("shutdown")
 
+    def delete_vm(self, vmid) -> None:
+        self.proxmox.nodes(self.config.node_name).qemu(vmid).status.stop.post()
+        vm_stopped = False 
+        while not vm_stopped:
+            status = self.proxmox.nodes(self.config.node_name).qemu(vmid).status.current.get()
+            if status['status'] == 'stopped':
+                vm_stopped = True
+            else:
+                time.sleep(3)
+        self.proxmox.nodes(self.config.node_name).qemu(vmid).delete()
+
     def reboot_vm(self, vmid) -> None:
         self.proxmox.nodes(self.config.node_name).qemu(vmid).status.post("reboot")
         for vm in self.proxmox.nodes(self.proxmox.nodes.get()[0]['node']).qemu.get():

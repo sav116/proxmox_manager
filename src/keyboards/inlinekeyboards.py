@@ -36,8 +36,14 @@ def get_ikb_vm(vmid: int) -> InlineKeyboardMarkup:
     main_action = "configure"
     b_config = InlineKeyboardMarkup(text=main_action + " ⚙️",
                             callback_data=f"{main_action}_{vm['vmid']}")
-    ikb.add(b_config)
+    # ikb.add(b_config)
+
+    main_action = "delete"
+    d_config = InlineKeyboardMarkup(text=main_action + " 🗑️",
+                            callback_data=f"{main_action}_{vm['vmid']}")
     
+    ikb.add(b_config, d_config)
+
     if vm["status"] == "stopped":
         main_action = "start"
         b = InlineKeyboardMarkup(text=main_action + " ▶️",
