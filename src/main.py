@@ -65,7 +65,7 @@ async def process_memory(message: Message, state: FSMContext):
     vm_memory = user_data['vm_memory'] * 1024
 
     await message.answer("ВМ создаётся")
-
+    await state.finish()
     # Вызов функции для создания ВМ
     await node.create_vm_from_template(
         vmname=vm_name,
@@ -74,8 +74,6 @@ async def process_memory(message: Message, state: FSMContext):
         cores=vm_cores,
         memory=vm_memory,
         )
-    # Завершение состояния
-    await state.finish()
 
 @dp.message_handler(commands=['start'])
 async def command_start(message: Message):
