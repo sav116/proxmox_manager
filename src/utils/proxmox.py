@@ -22,8 +22,8 @@ class ProxmoxNode(metaclass=BaseMeta):
             verify_ssl=False,
         )
     
-    @staticmethod
-    def bytes_to_gb(bytes_value):
+    # @staticmethod
+    def bytes_to_gb(self, bytes_value):
         return bytes_value / (1024 ** 3)
 
     def _execute_ssh_command(self, ip: str, username: str, password: str, command: str):
