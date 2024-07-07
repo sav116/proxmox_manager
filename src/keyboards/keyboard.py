@@ -2,7 +2,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 # Создаем кнопки
 button1 = KeyboardButton("VM's")
-button2 = KeyboardButton("Power on k8s")
+button2 = KeyboardButton("Storage")
 button3 = KeyboardButton("Reboot node")
 button4 = KeyboardButton("Shutdown node")
 button5 = KeyboardButton("Create VM")

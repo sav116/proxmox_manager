@@ -12,6 +12,7 @@ class ProxmoxNode(metaclass=BaseMeta):
     def __init__(self, config: ProxmoxVMConfig):
         self.config = config
         self.proxmox = self._get_proxmox()
+        self.name = self.proxmox.nodes.get()[0]['node']
 
     def _get_proxmox(self):
         return ProxmoxAPI(
@@ -20,6 +21,10 @@ class ProxmoxNode(metaclass=BaseMeta):
             password=self.config.password,
             verify_ssl=False,
         )
+    
+    @staticmethod
+    def bytes_to_gb(bytes_value):
+        return bytes_value / (1024 ** 3)
 
     def _execute_ssh_command(self, ip: str, username: str, password: str, command: str):
         ssh = SSHClient()
@@ -44,15 +49,38 @@ class ProxmoxNode(metaclass=BaseMeta):
         return [vm for vm in self.get_vms() if 'template' in vm]
         
     def get_vms(self) -> list:
-        return self.proxmox.nodes(self.proxmox.nodes.get()[0]['node']).qemu.get()
+        return self.proxmox.nodes(self.name).qemu.get()
 
     def get_vm(self, vmid: int) -> dict:
-        for vm in self.proxmox.nodes(self.proxmox.nodes.get()[0]['node']).qemu.get():
+        for vm in self.proxmox.nodes(self.name).qemu.get():
             if vm["vmid"] == vmid:
                 return vm
 
+    def get_storages_info(self) -> list:
+        storages = self.proxmox.nodes(self.name).storage.get()
+        storage_info_list = []
+
+        for storage in storages:
+            storage_status = self.proxmox.nodes(self.name).storage(storage['storage']).status.get()
+
+            total_gb = self.bytes_to_gb(storage_status['total'])
+            avail_gb = self.bytes_to_gb(storage_status['avail'])
+            used_gb = self.bytes_to_gb(storage_status['used'])
+            used_percent = (used_gb / total_gb) * 100 if total_gb > 0 else 0
+
+            storage_info = (
+                f"Storage: {storage['storage']}\n"
+                f"  Total: {total_gb:.2f} GB\n"
+                f"  Available: {avail_gb:.2f} GB\n"
+                f"  Used: {used_gb:.2f} GB ({used_percent:.2f}%)\n"
+            )
+
+            storage_info_list.append(storage_info)
+
+        return storage_info_list
+            
     def update_vm_config(self, vmid, cores, memory):
-        self.proxmox.nodes(self.proxmox.nodes.get()[0]['node']).qemu(vmid).config.put(
+        self.proxmox.nodes(self.name).qemu(vmid).config.put(
             cores=cores,
             memory=memory
         )
@@ -65,7 +93,7 @@ class ProxmoxNode(metaclass=BaseMeta):
         logger.info(f"Creating VM {vmname} with vmid {newid}")
         
         template_vmid = self.get_vmid_by_name(vmname=template_name)
-        self.proxmox.nodes(self.proxmox.nodes.get()[0]['node']).qemu(template_vmid).clone.post(
+        self.proxmox.nodes(self.name).qemu(template_vmid).clone.post(
             newid=newid,
             name=vmname,
             full=1,
@@ -73,7 +101,7 @@ class ProxmoxNode(metaclass=BaseMeta):
 
         lock = True
         while lock:
-            vm_info = self.proxmox.nodes(self.proxmox.nodes.get()[0]['node']).qemu(newid).status.current.get()
+            vm_info = self.proxmox.nodes(self.name).qemu(newid).status.current.get()
             if "lock" in vm_info:
                 time.sleep(3)
             else:
@@ -101,18 +129,18 @@ class ProxmoxNode(metaclass=BaseMeta):
                                   f"sed -i 's/\\.201$/\\.{vmid}/' /etc/sysconfig/network-scripts/ifcfg-ens18")
 
     def get_vmid_by_name(self, vmname: str) -> int:
-        for vm in self.proxmox.nodes(self.proxmox.nodes.get()[0]['node']).qemu.get():
+        for vm in self.proxmox.nodes(self.name).qemu.get():
             if vm["name"] == vmname:
                 return vm["vmid"]
     
     def get_vm_name(self, vmid: int) -> str:
-        for vm in self.proxmox.nodes(self.proxmox.nodes.get()[0]['node']).qemu.get():
+        for vm in self.proxmox.nodes(self.name).qemu.get():
             if vm["vmid"] == vmid:
                 return vm["name"]
     
     def start_vm(self, vmid) -> None:
         self.proxmox.nodes(self.config.node_name).qemu(vmid).status.post("start")
-        for vm in self.proxmox.nodes(self.proxmox.nodes.get()[0]['node']).qemu.get():
+        for vm in self.proxmox.nodes(self.name).qemu.get():
             if vm["vmid"] == vmid and vm["status"] == "running":
                 logger.info(f"VM {vmid} is running")
                 return
@@ -133,7 +161,7 @@ class ProxmoxNode(metaclass=BaseMeta):
 
     def reboot_vm(self, vmid) -> None:
         self.proxmox.nodes(self.config.node_name).qemu(vmid).status.post("reboot")
-        for vm in self.proxmox.nodes(self.proxmox.nodes.get()[0]['node']).qemu.get():
+        for vm in self.proxmox.nodes(self.name).qemu.get():
             if vm["vmid"] == vmid and vm["status"] == "running":
                 logger.info(f"VM {vmid} is running")
                 return

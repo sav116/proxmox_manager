@@ -171,6 +171,15 @@ async def messages(message: Message):
                                text='Virtual machines:',
                                reply_markup=get_ikb(),
                                parse_mode='HTML')
+
+    elif message.text == "Storage":
+
+        storage_info_list = node.get_storages_info()
+        message_storage_info = f"{'='*40}\n".join(storage_info_list)
+        await bot.delete_message(message.chat.id, message.message_id)
+        await bot.send_message(chat_id=message.chat.id,
+                               text=message_storage_info,
+                               parse_mode='HTML')
     
     elif message.text == "Power on k8s":
         node.start_k8s()
