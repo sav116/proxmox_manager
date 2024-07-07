@@ -5,8 +5,19 @@ from utils.proxmox import ProxmoxNode
 node = ProxmoxNode(config)
 proxmox = node._get_proxmox()
 
+
 # # Идентификатор виртуальной машины и размер инкремента
-# vm_id = 180
+vm_id = 180
+
+vm = node.get_vm(vm_id)
+for i in vm:
+    print(i)
+print(vm)
+vm_conf = vm_config = proxmox.nodes(node.name).qemu(vm_id).config.get()
+for i in vm_conf:
+    print(i)
+print(vm_conf)
+
 # increase_size_gb = 10  # Размер увеличения в ГБ
 
 # # Имя диска
@@ -75,27 +86,3 @@ proxmox = node._get_proxmox()
 #         )
 
 #         print(f"Successfully added {new_disk_size_gb} GB disk {disk_id} on storage {storage_name} to VM {vm_id}")
-
-
-
-
-
-# storages = proxmox.nodes(node.name).storage.get()
-# for storage in storages:
-#     storage_status = proxmox.nodes(node.name).storage(storage['storage']).status.get()
-
-#     total_gb = node.bytes_to_gb(storage_status['total'])
-#     avail_gb = node.bytes_to_gb(storage_status['avail'])
-#     used_gb = node.bytes_to_gb(storage_status['used'])
-#     print(f"Storage: {storage['storage']}")
-#     print(f"  Total: {total_gb:.2f} GB")
-#     print(f"  Available: {avail_gb:.2f} GB")
-#     print(f"  Used: {used_gb:.2f} GB")
-#     print("="*40)
-
-
-storage_info_list = node.get_storages_info()
-# print(storage_info_list)
-print(f"{'='*40}\n".join(storage_info_list))
-# for info in storage_info_list:
-#     print(info)

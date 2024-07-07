@@ -29,6 +29,7 @@ def get_ikb() -> InlineKeyboardMarkup:
     return ikb
 
 def get_ikb_vm(vmid: int) -> InlineKeyboardMarkup:
+
     ikb = InlineKeyboardMarkup(resize_keyboard=True)
     vm = [vm for vm in node.get_vms() if vm.get('vmid') == vmid][0]
     main_action = "configure"
@@ -56,4 +57,23 @@ def get_ikb_vm(vmid: int) -> InlineKeyboardMarkup:
                                   callback_data=f"{main_action}_{vm['vmid']}")
         ikb.add(b1, b2)
         
+    return ikb
+
+def get_config_ikb_vm(vmid: int) -> InlineKeyboardMarkup:
+    
+    ikb = InlineKeyboardMarkup(resize_keyboard=True, row_width=2)
+    main_action  = "change_cpu"
+    b_cpu = InlineKeyboardMarkup(text="cpu",
+                                callback_data=f"{main_action}_{vmid}")
+    main_action  = "change_ram"
+    b_ram = InlineKeyboardMarkup(text="ram",
+                                callback_data=f"{main_action}_{vmid}")
+    main_action  = "resize_disk"
+    b_resize_disk = InlineKeyboardMarkup(text="resize disk",
+                                callback_data=f"{main_action}_{vmid}")
+    main_action  = "add_new_disk"
+    b_add_new_disk = InlineKeyboardMarkup(text="add new disk",
+                                callback_data=f"{main_action}_{vmid}")
+    
+    ikb.add(b_cpu, b_ram, b_resize_disk, b_add_new_disk)
     return ikb

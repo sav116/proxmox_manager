@@ -22,7 +22,6 @@ class ProxmoxNode(metaclass=BaseMeta):
             verify_ssl=False,
         )
     
-    # @staticmethod
     def bytes_to_gb(self, bytes_value):
         return bytes_value / (1024 ** 3)
 
@@ -78,12 +77,14 @@ class ProxmoxNode(metaclass=BaseMeta):
             storage_info_list.append(storage_info)
 
         return storage_info_list
+
+    def get_vm_config(self, vmid) -> dict:
+        return self.proxmox.nodes(self.name).qemu(vmid).config.get()
             
-    def update_vm_config(self, vmid, cores, memory):
-        self.proxmox.nodes(self.name).qemu(vmid).config.put(
-            cores=cores,
-            memory=memory
-        )
+    def update_vm_config(self, vmid, **kwargs):
+        if not kwargs:
+            raise ValueError("At least one parameter (cores or memory) must be provided.")
+        self.proxmox.nodes(self.name).qemu(vmid).config.put(**kwargs)
     
     def create_vm_from_template(self, vmname: str, template_name: str, cores: int = 0, memory: int = 0, vmid: int = 0) -> None:
         newid = str(int(self.proxmox.cluster.nextid.get()) + 1)
@@ -109,8 +110,7 @@ class ProxmoxNode(metaclass=BaseMeta):
 
         logger.info(f"VM {vmname} with vmid {newid} created")
 
-        if cores or memory:
-            self.update_vm_config(newid, cores=cores, memory=memory)
+        self.update_vm_config(newid, cores=cores, memory=memory)
         
         self.start_vm(newid)
         logger.info(f"Sleeping 10 seconds ...")

@@ -4,19 +4,60 @@ from aiogram.types import Message, CallbackQuery
 
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram import types
 
 from data.loader import dp, bot, node
 from keyboards.keyboard import kb
 from utils.notify_admins import on_startup
 from utils.vms import get_vm_info
-from keyboards.inlinekeyboards import get_ikb, get_ikb_vm
+from keyboards.inlinekeyboards import get_ikb, get_ikb_vm, get_config_ikb_vm
 
+class ChangeCPUStep(StatesGroup):
+    waiting_for_new_cpu = State()
+
+class ChangeRAMStep(StatesGroup):
+    waiting_for_new_ram = State()
 
 class CreateVMStates(StatesGroup):
     waiting_for_name = State()
     waiting_for_id = State()
     waiting_for_cores = State()
     waiting_for_memory = State()
+
+@dp.message_handler(state=ChangeRAMStep.waiting_for_new_ram, content_types=types.ContentTypes.TEXT)
+async def process_new_ram_value(message: types.Message, state: FSMContext):
+    new_ram_value = message.text
+    if not new_ram_value.isdigit():
+        await message.reply("Введите количество памяти (GB):")
+        return
+
+    new_ram_value_mb = int(new_ram_value) * 1024
+    user_data = await state.get_data()
+    vmid = user_data['vmid']
+    
+    node.update_vm_config(vmid, memory=new_ram_value_mb)
+    
+    await message.reply(f"Значение памяти для VM {vmid} обновлено до {new_ram_value}Gb.")
+
+    await state.finish()
+
+@dp.message_handler(state=ChangeCPUStep.waiting_for_new_cpu, content_types=types.ContentTypes.TEXT)
+async def process_new_cpu_value(message: types.Message, state: FSMContext):
+    new_cpu_value = message.text
+    if not new_cpu_value.isdigit():
+        await message.reply("Введите количество ядер CPU:")
+        return
+
+    new_cpu_value = int(new_cpu_value)
+    user_data = await state.get_data()
+    vmid = user_data['vmid']
+    
+    node.update_vm_config(vmid, cores=new_cpu_value)
+    
+    await message.reply(f"Количество ядер CPU для VM {vmid} обновлено до {new_cpu_value}.")
+
+    # Завершаем состояние
+    await state.finish()
 
 @dp.message_handler(lambda message: message.text.lower() == 'cancel' or message.text.startswith('/cancel'), state='*')
 async def cancel_handler(message: Message, state: FSMContext):
@@ -96,7 +137,7 @@ async def command_start(message: Message):
                             parse_mode='HTML')
 
 @dp.callback_query_handler()
-async def choice_mode_city_positions(call: CallbackQuery):
+async def choice_mode_city_positions(call: CallbackQuery, state: FSMContext):
     call_dict = dict(call)
     call_back_data = call_dict["data"]
 
@@ -158,8 +199,28 @@ async def choice_mode_city_positions(call: CallbackQuery):
                                 parse_mode='HTML')
         
     elif call_back_data.startswith("configure"):
-        #await bot.delete_message(call.message.chat.id, call.message.message_id)
-        await bot.answer_callback_query(call.id, text="Эта опция ещё разработке", show_alert=False)
+        vmid = int(call_back_data.split("_")[-1])
+        #vmname = node.get_vm_name(vmid)
+        vm_info = get_vm_info(vmid)
+        await bot.delete_message(call.message.chat.id, call.message.message_id)
+        await bot.send_message(chat_id=call.message.chat.id,
+                               text=vm_info,
+                               reply_markup=get_config_ikb_vm(vmid),
+                               parse_mode='HTML')
+        
+    elif call_back_data.startswith("change_cpu"):
+        vmid = int(call_back_data.split("_")[-1])
+        await bot.send_message(chat_id=call.message.chat.id,
+                               text=f"Введите новое значение CPU для VM {vmid}:")
+        await state.update_data(vmid=vmid)
+        await ChangeCPUStep.waiting_for_new_cpu.set()
+
+    elif call_back_data.startswith("change_ram"):
+        vmid = int(call_back_data.split("_")[-1])
+        await bot.send_message(chat_id=call.message.chat.id,
+                               text=f"Введите новое значение памяти (GB) для VM {vmid}:")
+        await state.update_data(vmid=vmid)
+        await ChangeRAMStep.waiting_for_new_ram.set()
         
         
 @dp.message_handler()
