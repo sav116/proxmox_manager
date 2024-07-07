@@ -3,8 +3,7 @@ from aiogram.dispatcher import FSMContext
 from data.loader import dp, bot, node
 from keyboards.inlinekeyboards import get_ikb, get_ikb_vm, get_config_ikb_vm
 from utils.vms import get_vm_info
-from states import ChangeCPUStep
-from states import ChangeRAMStep
+from handlers.states import ChangeCPUStep, ChangeRAMStep
 
 @dp.callback_query_handler()
 async def choice_mode_city_positions(call: CallbackQuery, state: FSMContext):

@@ -3,7 +3,7 @@ from aiogram.dispatcher import FSMContext
 from data.loader import dp, bot, node
 from keyboards.inlinekeyboards import get_ikb
 from utils.vms import get_vm_info
-from states import ChangeCPUStep, ChangeRAMStep, CreateVMStates
+from handlers.states import ChangeCPUStep, ChangeRAMStep, CreateVMStates
 
 @dp.message_handler(state=ChangeRAMStep.waiting_for_new_ram, content_types=ContentTypes.TEXT)
 async def process_new_ram_value(message: Message, state: FSMContext):
