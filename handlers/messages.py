@@ -3,7 +3,7 @@ from aiogram.dispatcher import FSMContext
 from data.loader import dp, bot, node
 from keyboards.inlinekeyboards import get_ikb
 from utils.vms import get_vm_info
-from handlers.states import ChangeCPUStep, ChangeRAMStep, CreateVMStates
+from handlers.states import ChangeCPUStep, ChangeRAMStep, CreateVMStates, ResizeDiskStep, CreateDiskStep
 
 @dp.message_handler(state=ChangeRAMStep.waiting_for_new_ram, content_types=ContentTypes.TEXT)
 async def process_new_ram_value(message: Message, state: FSMContext):
@@ -38,6 +38,38 @@ async def process_new_cpu_value(message: Message, state: FSMContext):
     await message.reply(f"Количество ядер CPU для VM {vmid} обновлено до {new_cpu_value}.")
 
     # Завершаем состояние
+    await state.finish()
+
+@dp.message_handler(state=ResizeDiskStep.waiting_for_increment, content_types=ContentTypes.TEXT)
+async def process_value(message: Message, state: FSMContext):
+    input_value = message.text
+    if not input_value.isdigit():
+        await message.reply("Введите насколько увеличить диск цифрами:")
+        return
+
+    input_value = int(input_value)
+    user_data = await state.get_data()
+    vmid = user_data['vmid']
+    disk = user_data['disk']
+    node.resize_disk(vmid, disk=disk, size=f"+{input_value}G")
+    
+    await message.reply(f"Размер диска {disk} для VM {vmid} увеличен на {input_value}GB")
+    await state.finish()
+
+@dp.message_handler(state=CreateDiskStep.waiting_for_disk_value, content_types=ContentTypes.TEXT)
+async def process_value(message: Message, state: FSMContext):
+    input_value = message.text
+    if not input_value.isdigit():
+        await message.reply("Введите размер нового диска цифрами:")
+        return
+
+    input_value = int(input_value)
+    user_data = await state.get_data()
+    vmid = user_data['vmid']
+    storage = user_data['storage']
+    node.create_new_disk(vmid, storage_name=storage, size=f"{input_value}G")
+    
+    await message.reply(f"Новый диск размером в {input_value}Gb добавлен в VM {vmid}")
     await state.finish()
 
 @dp.message_handler(lambda message: message.text.lower() == 'cancel' or message.text.startswith('/cancel'), state='*')

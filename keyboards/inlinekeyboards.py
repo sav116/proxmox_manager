@@ -77,3 +77,36 @@ def get_config_ikb_vm(vmid: int) -> InlineKeyboardMarkup:
     
     ikb.add(b_cpu, b_ram, b_resize_disk, b_add_new_disk)
     return ikb
+
+def get_storages_for_choice_ikb_vm()  -> InlineKeyboardMarkup:
+    ikb = InlineKeyboardMarkup()
+    buttons = []
+    storages = node.get_storages()
+    for storage in storages:
+        storage_name = storage['storage']
+        button = InlineKeyboardButton(text=storage_name, callback_data=f"choice_storage_{storage_name}")
+        buttons.append(button)
+
+    ikb.add(*buttons)
+    return ikb
+
+def get_disks_ikb_vm(vmid: int) -> InlineKeyboardMarkup:
+    ikb = InlineKeyboardMarkup()
+    buttons = []
+
+    vm_conf = node.get_vm_config(vmid)
+    disks_data = []
+    for i in vm_conf:
+        if 'scsi' in i and i[-1].isdigit():
+            _disk_interface = f"{i}"
+            _storage = vm_conf[i].split(":")[0]
+            _size = vm_conf[i].split("=")[-1]
+            disks_data.append((f"{_disk_interface}-{_storage}-{_size}", _disk_interface))
+    
+    for button_name, disk_interface in disks_data:
+
+        button = InlineKeyboardButton(text=button_name, callback_data=f"choise_disk_resize_{disk_interface}_{vmid}")
+        buttons.append(button)
+    
+    ikb.add(*buttons)
+    return ikb

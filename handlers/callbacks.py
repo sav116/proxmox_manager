@@ -1,9 +1,9 @@
 from aiogram.types import CallbackQuery
 from aiogram.dispatcher import FSMContext
 from data.loader import dp, bot, node
-from keyboards.inlinekeyboards import get_ikb, get_ikb_vm, get_config_ikb_vm
+from keyboards.inlinekeyboards import get_ikb, get_ikb_vm, get_config_ikb_vm, get_storages_for_choice_ikb_vm, get_disks_ikb_vm
 from utils.vms import get_vm_info
-from handlers.states import ChangeCPUStep, ChangeRAMStep
+from handlers.states import ChangeCPUStep, ChangeRAMStep, CreateDiskStep, ResizeDiskStep
 
 @dp.callback_query_handler()
 async def choice_mode_city_positions(call: CallbackQuery, state: FSMContext):
@@ -88,3 +88,41 @@ async def choice_mode_city_positions(call: CallbackQuery, state: FSMContext):
                                text=f"Введите новое значение памяти (GB) для VM {vmid}:")
         await state.update_data(vmid=vmid)
         await ChangeRAMStep.waiting_for_new_ram.set()
+
+    elif call_back_data.startswith("resize_disk"):
+        vmid = int(call_back_data.split("_")[-1])
+        await bot.send_message(chat_id=call.message.chat.id,
+                               text="Выберите диск",
+                               reply_markup=get_disks_ikb_vm(vmid),
+                               parse_mode='HTML')
+
+    elif call_back_data.startswith("choise_disk_resize_"):
+        vmid = int(call_back_data.split("_")[-1])
+        disk = call_back_data.split("_")[-2]
+
+        await bot.send_message(chat_id=call.message.chat.id,
+                               text=f"Введите насколько увеличить диск {disk} в GB для ВМ {vmid}:")
+
+        await state.update_data(vmid=vmid, disk=disk)
+        await ResizeDiskStep.waiting_for_increment.set()
+        
+
+    elif call_back_data.startswith("add_new_disk_"):
+        vmid = int(call_back_data.split("_")[-1])
+        await bot.send_message(chat_id=call.message.chat.id,
+                               text="Выберете storage:",
+                               reply_markup=get_storages_for_choice_ikb_vm(),
+                               parse_mode='HTML')
+        
+        await state.update_data(vmid=vmid)
+
+    elif call_back_data.startswith("choice_storage_"):
+        storage = call_back_data.split("_")[-1]
+        user_data = await state.get_data()
+        print(user_data)
+        vmid = user_data['vmid']
+        await bot.send_message(chat_id=call.message.chat.id,
+                               text=f"Введите размер нового диска в GB для ВМ {vmid}:")
+
+        await state.update_data(storage=storage)
+        await CreateDiskStep.waiting_for_disk_value.set()

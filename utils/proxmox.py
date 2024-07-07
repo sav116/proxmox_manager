@@ -54,12 +54,14 @@ class ProxmoxNode(metaclass=BaseMeta):
         for vm in self.proxmox.nodes(self.name).qemu.get():
             if vm["vmid"] == vmid:
                 return vm
-
+            
+    def get_storages(self)  -> list:
+        return self.proxmox.nodes(self.name).storage.get()
+    
     def get_storages_info(self) -> list:
-        storages = self.proxmox.nodes(self.name).storage.get()
         storage_info_list = []
 
-        for storage in storages:
+        for storage in self.get_storages():
             storage_status = self.proxmox.nodes(self.name).storage(storage['storage']).status.get()
 
             total_gb = self.bytes_to_gb(storage_status['total'])
@@ -85,6 +87,33 @@ class ProxmoxNode(metaclass=BaseMeta):
         if not kwargs:
             raise ValueError("At least one parameter (cores or memory) must be provided.")
         self.proxmox.nodes(self.name).qemu(vmid).config.put(**kwargs)
+    
+    def resize_disk(self, vmid, **kwargs) -> None:
+        self.proxmox.nodes(self.name).qemu(vmid).resize.put(**kwargs)
+    
+    def create_new_disk(self, vmid: int, storage_name: str, size: str)  -> None:
+        # Ищем свободный слот для нового диска
+        vm_config = self.proxmox.nodes(self.name).qemu(vmid).config.get()
+        disk_id = None
+        for i in range(16):
+            scsi_key = f"scsi{i}"
+            if scsi_key not in vm_config:
+                disk_id = scsi_key
+                break
+
+        if disk_id is None:
+            logger.error(f"No free disk slot available for VM {vmid}")
+
+        else:
+            disk_name = f"vm-{vmid}-disk-{disk_id}"
+            self.proxmox.nodes(self.name).storage(storage_name).content.post(
+                vmid=vmid,
+                filename=disk_name,
+                size=size
+            )
+            self.proxmox.nodes(self.name).qemu(vmid).config.post(
+                **{disk_id: f"{storage_name}:{disk_name},size={size}"}
+            )
     
     def create_vm_from_template(self, vmname: str, template_name: str, cores: int = 0, memory: int = 0, vmid: int = 0) -> None:
         newid = str(int(self.proxmox.cluster.nextid.get()) + 1)

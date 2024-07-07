@@ -5,18 +5,12 @@ from utils.proxmox import ProxmoxNode
 node = ProxmoxNode(config)
 proxmox = node._get_proxmox()
 
-
 # # Идентификатор виртуальной машины и размер инкремента
-vm_id = 180
+vmid = 180
+storage="ssd1"
+input_value=10
 
-vm = node.get_vm(vm_id)
-for i in vm:
-    print(i)
-print(vm)
-vm_conf = vm_config = proxmox.nodes(node.name).qemu(vm_id).config.get()
-for i in vm_conf:
-    print(i)
-print(vm_conf)
+node.create_new_disk(vmid, storage, size=f"{input_value}G")
 
 # increase_size_gb = 10  # Размер увеличения в ГБ
 
@@ -26,7 +20,7 @@ print(vm_conf)
 # # Получение текущей конфигурации диска
 # vm_config = proxmox.nodes(node.name).qemu(vm_id).config.get()
 
-# # Получаем информацию о текущем размере диска
+# Получаем информацию о текущем размере диска
 # current_size = None
 # for key, value in vm_config.items():
 #     if key == disk_name:
@@ -48,9 +42,6 @@ print(vm_conf)
 #         print(f"Successfully increased disk {disk_name} by {increase_size_gb} GB for VM {vm_id}")
 #     except Exception as e:
 #         print(f"Failed to resize disk: {e}")
-
-
-
 
 
 # Получаем информацию о хранилище
