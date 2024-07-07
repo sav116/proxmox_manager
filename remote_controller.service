@@ -1,0 +1,15 @@
+[Unit]
+Description=A controller of Proxmox VM's
+After=syslog.target network.target
+
+[Service]
+WorkingDirectory=/root/remote_controller
+ExecStart=python3.11 main.py
+StandardOutput=append:/var/log/controller.log
+StandardError=append:/var/log/controller-errors.log
+
+Restart=always
+RestartSec=120
+
+[Install]
+WantedBy=multi-user.target
