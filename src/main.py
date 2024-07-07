@@ -7,7 +7,7 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 
 from data.loader import dp, bot, node
 from keyboards.keyboard import kb
-from utils.notify_admins import on_startup_notify, on_startup
+from utils.notify_admins import on_startup
 from utils.vms import get_vm_info
 from keyboards.inlinekeyboards import get_ikb, get_ikb_vm
 
